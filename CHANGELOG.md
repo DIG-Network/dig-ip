@@ -6,8 +6,8 @@ This project adheres to [Semantic Versioning](https://semver.org) and
 
 ## [0.1.1] - 2026-07-18
 
-### Miscellaneous
-- **dig-ip:** Relicensed GPL-2.0 → Apache-2.0 OR MIT; no code change. Corrects a mis-seeded license so the permissive peer crates (dig-nat/dig-gossip/dig-dht/dig-node-core) can legally link this leaf crate (#1038)
+### Chores
+- **dig-ip:** Relicense GPL-2.0 → Apache-2.0 OR MIT (#1038) (#1)
 
 ## [0.1.0] - 2026-07-18
 
