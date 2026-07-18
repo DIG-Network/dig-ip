@@ -1,0 +1,33 @@
+# dig-ip — the canonical DIG address-family discovery + IPv6-first happy-eyeballs dial crate.
+#
+# ONE ecosystem implementation of CLAUDE.md §5.2 (IPv6-first, IPv4-fallback for peer comms):
+#   - local IPv6/IPv4 stack detection (`LocalStack`),
+#   - family-tagged peer-candidate aggregation from every discovery source (`PeerCandidates`),
+#   - the local∩peer family-INTERSECTION dial order (never emit a SYN for a family the LOCAL host
+#     lacks OR the PEER lacks) — `dial_order`,
+#   - the RFC-8305 (Happy Eyeballs v2) connect racer — `connect`.
+#
+# LEAF CRATE by design: it has NO `dig-*` dependencies, so EVERY peer crate — including the ones
+# that vendor rather than depend on dig-nat (dig-relay) — can consume it. The transport dial itself
+# stays a caller-supplied closure, so dig-ip needs no TLS/socket/transport dependency.
+[package]
+name = "dig-ip"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75.0"
+license = "GPL-2.0"
+description = "Canonical DIG Network address-family discovery + IPv6-first happy-eyeballs (RFC 8305) dial: local IPv6/IPv4 stack detection, family-tagged peer-candidate aggregation, and the local-and-peer family-intersection dial order that never mis-dials a family the local host or the peer lacks."
+repository = "https://github.com/DIG-Network/dig-ip"
+readme = "README.md"
+keywords = ["ipv6", "happy-eyeballs", "p2p", "dial", "dig"]
+categories = ["network-programming"]
+
+[dependencies]
+# Async runtime for the happy-eyeballs racer (staggered concurrent connect attempts + timeouts).
+tokio = { version = "1", features = ["rt", "macros", "time"] }
+# Concurrent attempt bookkeeping in the racer (FuturesUnordered).
+futures = { version = "0.3", default-features = false, features = ["std", "async-await"] }
+
+[dev-dependencies]
+# Deterministic timing assertions for the racer without real sockets.
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "time", "test-util"] }
