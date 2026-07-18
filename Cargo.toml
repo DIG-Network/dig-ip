@@ -12,10 +12,10 @@
 # stays a caller-supplied closure, so dig-ip needs no TLS/socket/transport dependency.
 [package]
 name = "dig-ip"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.75.0"
-license = "GPL-2.0"
+license = "Apache-2.0 OR MIT"
 description = "Canonical DIG Network address-family discovery + IPv6-first happy-eyeballs (RFC 8305) dial: local IPv6/IPv4 stack detection, family-tagged peer-candidate aggregation, and the local-and-peer family-intersection dial order that never mis-dials a family the local host or the peer lacks."
 repository = "https://github.com/DIG-Network/dig-ip"
 readme = "README.md"
