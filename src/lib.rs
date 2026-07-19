@@ -12,18 +12,22 @@
 //! 1. [`LocalStack`] — which families THIS host can reach (`detect` / `cached` / `from_flags`).
 //! 2. [`PeerCandidates`] — a peer's family-tagged candidate addresses, aggregated from every
 //!    discovery source ([`CandidateSource`]) and de-duplicated.
-//! 3. [`dial_order`] — the local∩peer family intersection, IPv6-first; a typed [`NoCommonFamily`]
-//!    when disjoint. Its output NEVER contains a family the local host or the peer lacks.
+//! 3. [`dial_order`] — the local∩peer family intersection, IPv6-first, that FAILS OPEN when local
+//!    detection cannot confidently name a common family; a typed [`NoCommonFamily`] only when the peer
+//!    offers no candidate at all.
 //! 4. [`connect`] — the RFC-8305 happy-eyeballs racer over that order, IPv6-preferred with graceful
 //!    IPv4 fallback; the transport dial is a caller-supplied closure so this crate stays a leaf with
 //!    no TLS/socket dependency.
 //!
 //! ## The core guarantee
 //!
-//! An address of a family the LOCAL host lacks, or a family the PEER lacks, is NEVER dialed — this is
-//! enforced structurally by [`dial_order`] (which [`connect`] builds its attempt list from), not by
-//! convention. That is the anti-mis-dial rule the user asked for: "an IPv6 client doesn't try to
-//! connect to an IPv4-only client" (and vice-versa).
+//! When local detection is AFFIRMATIVE for at least one of the peer's families, the intersection is an
+//! optimization: an address of a family the local host affirmatively lacks, or a family the peer lacks,
+//! is not dialed ("an IPv6 client doesn't try to connect to an IPv4-only client", and vice-versa).
+//! Because negative detection is unreliable — an overlay / split-tunnel / pre-route host probes
+//! `ENETUNREACH` for a family it can actually reach — an EMPTY intersection over a peer that has
+//! candidates fails OPEN (attempts them all, IPv6-first) rather than stranding a reachable peer;
+//! [`NoCommonFamily`] means only "the peer offered nothing to dial".
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
