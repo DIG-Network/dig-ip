@@ -32,11 +32,11 @@ fn peer_with(v6: bool, v4: bool) -> PeerCandidates {
     p
 }
 
-// (a) v6-only peer, v4-only local host → NoCommonFamily immediately, no dial attempted, no hang.
+// (a) A peer with NO candidates is the only clean unreachable: no dial attempted, no hang.
 #[tokio::test]
-async fn v6_only_peer_from_v4_only_host_is_clean_unreachable() {
-    let local = LocalStack::from_flags(false, true);
-    let peer = peer_with(true, false);
+async fn peer_without_candidates_is_clean_unreachable() {
+    let local = LocalStack::from_flags(true, true);
+    let peer = PeerCandidates::new();
     let attempts = Arc::new(AtomicUsize::new(0));
     let a = attempts.clone();
 
@@ -54,7 +54,35 @@ async fn v6_only_peer_from_v4_only_host_is_clean_unreachable() {
     assert_eq!(
         attempts.load(Ordering::SeqCst),
         0,
-        "no dial may be attempted when there is no common family"
+        "no dial may be attempted when the peer offers no candidate"
+    );
+}
+
+// (a') FAIL OPEN: a v6-only peer from a v4-only-DETECTED host is NOT stranded — the negative v6
+// detection may be a false negative on an overlay/pre-route network, so the peer's v6 candidate is
+// attempted (and here connects) rather than refused.
+#[tokio::test]
+async fn empty_intersection_over_a_reachable_peer_still_dials() {
+    let local = LocalStack::from_flags(false, true);
+    let peer = peer_with(true, false);
+    let attempts = Arc::new(AtomicUsize::new(0));
+    let a = attempts.clone();
+
+    let winner = connect(&local, &peer, cfg(), move |addr| {
+        let a = a.clone();
+        async move {
+            a.fetch_add(1, Ordering::SeqCst);
+            Ok::<SocketAddr, String>(addr)
+        }
+    })
+    .await
+    .expect("the reachable peer's candidate must be attempted, not stranded");
+
+    assert_eq!(winner.addr, sa("[2001:db8::1]:443"));
+    assert_eq!(
+        attempts.load(Ordering::SeqCst),
+        1,
+        "the peer's v6 candidate is dialed"
     );
 }
 
@@ -272,7 +300,7 @@ async fn default_config_returns_the_connection() {
 #[test]
 fn connect_errors_display_readably() {
     let local = LocalStack::from_flags(false, true);
-    let peer = peer_with(true, false);
+    let peer = PeerCandidates::new();
     let no_common = dig_ip::dial_order(&local, &peer).unwrap_err();
     let msg = no_common.to_string();
     assert!(msg.contains("no common address family"), "{msg}");

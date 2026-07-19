@@ -12,7 +12,7 @@
 # stays a caller-supplied closure, so dig-ip needs no TLS/socket/transport dependency.
 [package]
 name = "dig-ip"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 rust-version = "1.75.0"
 license = "Apache-2.0 OR MIT"
@@ -27,6 +27,9 @@ categories = ["network-programming"]
 tokio = { version = "1", features = ["rt", "macros", "time"] }
 # Concurrent attempt bookkeeping in the racer (FuturesUnordered).
 futures = { version = "0.3", default-features = false, features = ["std", "async-await"] }
+# Structured observability: a `warn!` when the local∩peer intersection empties a non-empty candidate
+# set (the fail-open path) so a connectivity gap on overlay/pre-route networks is visible.
+tracing = { version = "0.1", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 # Deterministic timing assertions for the racer without real sockets.
